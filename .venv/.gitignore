@@ -1,0 +1,28 @@
+# Виртуальное окружение
+.venv/
+
+# Кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Кэш тестов
+.pytest_cache/
+.tox/
+
+# Логи и временные файлы
+*.log
+*.pot
+*.mo
+
+# IDE (PyCharm, VSCode)
+.idea/
+.vscode/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# Системные
+.DS_Store
+Thumbs.db
