@@ -1,6 +1,6 @@
-from dataclasses import dataclass
-from typing import Optional, ClassVar, List, Union
-from datetime import datetime, date
+from dataclasses import dataclass, field
+from typing import ClassVar, Iterable
+from datetime import datetime, date as Date
 # Заготовка под БД
 # @dataclass
 # class User:
@@ -15,24 +15,37 @@ from datetime import datetime, date
 #     group_id: Optional[int] = None
 #     created_at: Optional[dt] = None
 
-@dataclass
+@dataclass(slots=True)
 class Workout:
-    # id: ClassVar[int] = 0 Запасная, если не сделаю счетчик в репозитории InMemoryWorkouts
-    duration: int | float
-    date: str
+    duration: float
+    date: Date
     title: str
-    SESSION: ClassVar[List[str]] = ['cardio', 'strength', 'elliptical', 'treadmill']
-    
-    def validate_duraton(self, duration:int|float) -> int|float:
-        # Обработаем длительность тренировки
-        if self.duration is None:
-            raise ValueError(f'Длительность тренировки - обязательное значение')
-        if not isinstance(self.duration, (int,float)):
-            raise TypeError(f"Длительность должна быть числом, получен {type(self.duration)}")
-        if type(self.duration) == float:
-            self.duration = round(self.duration, 2)
-        if self.duration <= 0:
-            raise ValueError(f'Длительность не может быть <= 0')    
+
+    ALLOWED_TITLES: ClassVar[tuple[str, ...]] = ('cardio', 'strength', 'elliptical', 'treadmill')
+
+    @staticmethod
+    def _normalize_duraton(value: float | int) -> float:
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"duration must be int|float, got {type(value)}")
+        if value <= 0:
+            raise ValueError(f"duration must be positive, got {value}")
+        return round(float(value), 2)
+
+    @classmethod
+
+
+
+
+
+
+        # if self.duration is None:
+        #     raise ValueError(f'Длительность тренировки - обязательное значение')
+        # if not isinstance(self.duration, (int,float)):
+        #     raise TypeError(f"Длительность должна быть числом, получен {type(self.duration)}")
+        # if type(self.duration) == float:
+        #     self.duration = round(self.duration, 2)
+        # if self.duration <= 0:
+        #     raise ValueError(f'Длительность не может быть <= 0')
     
     def validate_title (self, title:str) -> str:
         # Тут мы проверяем тип тренировки из ClassVar, добавляем проверки ввода, обрабатываем ввод
