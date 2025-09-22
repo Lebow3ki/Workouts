@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional, ClassVar, List
-from datetime import datetime as dt,
-from datetime import date
+from typing import Optional, ClassVar, List, Union
+from datetime import datetime, date
 # Заготовка под БД
 # @dataclass
 # class User:
-#     id: Optional[int]
+#     id: [int]
 #     first_name: Optional[str]
 #     last_name: Optional[str]
 #     email: Optional[str]
@@ -18,39 +17,70 @@ from datetime import date
 
 @dataclass
 class Workout:
-    id: int
-    date: None
-    KIND_VAR: ClassVar[List[str]] = ['cardio', 'strength', 'elliptical', 'treadmill']
+    # id: ClassVar[int] = 0 Запасная, если не сделаю счетчик в репозитории InMemoryWorkouts
+    duration: int | float
+    date: str
+    title: str
+    SESSION: ClassVar[List[str]] = ['cardio', 'strength', 'elliptical', 'treadmill']
+    
+    def validate_duraton(self, duration:int|float) -> int|float:
+        # Обработаем длительность тренировки
+        if self.duration is None:
+            raise ValueError(f'Длительность тренировки - обязательное значение')
+        if not isinstance(self.duration, (int,float)):
+            raise TypeError(f"Длительность должна быть числом, получен {type(self.duration)}")
+        if type(self.duration) == float:
+            self.duration = round(self.duration, 2)
+        if self.duration <= 0:
+            raise ValueError(f'Длительность не может быть <= 0')    
+    
+    def validate_title (self, title:str) -> str:
+        # Тут мы проверяем тип тренировки из ClassVar, добавляем проверки ввода, обрабатываем ввод
+        if self.title is None:
+            raise ValueError(f"Введите тип тренировки")        
+        elif not isinstance(self.title, str):
+            raise TypeError(f'Тренировка должна быть текстом, сейчас получен {type(self.title)}')    
+        # Обрабатываем ввод:
+        self.title = self.title.lower().strip()
+        # Проверяем допуск ClassVar
+        if self.title not in self.SESSION:
+            raise ValueError(f"Неверный тип тренировки: {self.title}. Допустимые: {self.SESSION}")
 
-    kind: str
-
-    def __post_init__(self):
-        self.kind = self.kind.lower()
-        if self.kind not in self.KIND_VAR:
-             raise ValueError(f"Неверный тип тренировки: {self.kind}. Допустимые: {self.KIND_VAR}")
-
-    def formatted_date(self, fmt: str = "%d.%m.%Y") -> str:
-        """Возвращает дату в заданном формате"""
-        return self.date.strftime(fmt)
-
-class InMemoryWorkouts:
-    def __init__(self, workout: Workout):
-    next_id: int = 0
-
-    def record_workout(self, workout: Workout):
-    action = {next_id : Workout}
-
-
-
+    def validate_date(self, date: str = "%d.%m.%Y") -> str:
+    # Временное рещение, надо добавить автоматическую генерацию значения. 
+    # Проверяем дату и возвращает в заданном формате
+        if self.date is None:
+            self.date = date.today().strftime("%d.%m.%Y")
+        if isinstance(self.date, str):
+            try:
+                for format in ["%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"]:
+                    try:
+                        self.date = datetime.datetime.strptime(self.date, format).date()
+                        break   
+                    except ValueError:
+                        continue
+                else:
+                    ValueError(f'Не удалось распознать тип даты{self.date}')
+            except Exception as e:
+                raise ValueError(f'Ошибка преобразования строки в дату: {e}')                    
+                               
+        elif not isinstance(self.date, int):
+            raise TypeError(f'Дата должна быть текстом, сейчас получен {type(self.date)}')
+        # Проверяем, что дата не в будущем:
+        if self.date > date.today():
+           raise ValueError(f"Дата не может быть в будущем: {self.date}") 
+       
     def __init__(self):
         pass
-    def create(self):
 
-    def get(self):
+    def __post_init__(self):
+        self.validate_duraton(self.duration)
+        self.validate_title(self.title)
+        self.validate_date(self.date)
+        # self.id +=1 Запасной счетчик
 
-    def list(self):
-
-    def delete(self):
+# @dataclass  
+# class InMemoryWorkouts:
 
 
 
