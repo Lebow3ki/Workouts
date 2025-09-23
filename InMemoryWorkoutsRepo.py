@@ -1,19 +1,63 @@
 from dataclasses import dataclass, field
-from typing import ClassVar, Iterable
+from typing import ClassVar, Iterable, Optional
 from datetime import datetime, date as Date
-# Заготовка под БД
-# @dataclass
-# class User:
-#     id: [int]
-#     first_name: Optional[str]
-#     last_name: Optional[str]
-#     email: Optional[str]
-#     tg_id: Optional[str]
-#     mobile_number: Optional[str]
-#     age: Optional[int] = None
-#     weight: Optional[float] = None
-#     group_id: Optional[int] = None
-#     created_at: Optional[dt] = None
+from zoneinfo import ZoneInfo
+
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+
+def _moscow_dtnow_formatted():
+    return datetime.now(MOSCOW_TZ).strftime("%d.%m.%Y, %H:%M")
+
+@dataclass(slots=True)
+class User:
+    tg_id: str
+    created_at: str = field (default_factory=_moscow_dtnow_formatted()) 
+    age: Optional[int] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    sex: Optional[int] = None
+
+    def __post_init__(self):
+        self._check_tg_id()
+
+
+    def _check_tg_id(self, value: str):
+        if self.tg_id.strip() is None:
+            raise ValueError(f'Missing Telegram ID')
+        if self.tg_id is not isinstance(value, str):
+            raise TypeError(f"Telegram ID must be a string, now got {type(value)})
+        # Later to add check on unique tg_id    
+
+@dataclass(slots=True)
+class Exercise:
+    ALLOWED_KINDS: ClassVar[tuple[str, ...]] = ('cardio', 'strength', 'other')
+    kind: str # Тип упражнения
+    title: str # Человекочитаемое название
+    weight_kg, duration_min, pace: float
+    reps, sets: int
+    duration_min: str # End time - start time
+    notes: Optional[str]
+
+    def __post_init__(self):
+        
+    
+
+
+
+
+    
+
+
+    
+        
+                            
+
+
+
+    
+    
+
+
 
 @dataclass(slots=True)
 class Workout:
@@ -32,10 +76,6 @@ class Workout:
         return round(float(value), 2)
 
     @classmethod
-
-
-
-
 
 
         # if self.duration is None:
