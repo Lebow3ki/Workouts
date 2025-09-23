@@ -20,12 +20,12 @@ class User:
     def __post_init__(self):
         self._check_tg_id()
 
-
-    def _check_tg_id(self, value: str):
+    @staticmethod
+    def _check_tg_id(value: str):
         if self.tg_id.strip() is None:
             raise ValueError(f'Missing Telegram ID')
         if self.tg_id is not isinstance(value, str):
-            raise TypeError(f"Telegram ID must be a string, now got {type(value)})
+            raise TypeError(f"Telegram ID must be a string, now got {type(value)}")
         # Later to add check on unique tg_id    
 
 @dataclass(slots=True)
@@ -33,32 +33,45 @@ class Exercise:
     ALLOWED_KINDS: ClassVar[tuple[str, ...]] = ('cardio', 'strength', 'other')
     kind: str # Тип упражнения
     title: str # Человекочитаемое название
-    weight_kg, duration_min, pace: float
-    reps, sets: int
-    duration_min: str # End time - start time
+    weight_kg: float 
+    duration_min: float
+    pace: float
+    reps: int
+    sets: int
+    date: str
+    duration_min: float
     notes: Optional[str]
 
     def __post_init__(self):
-        
+        pass    
     
+    @staticmethod
+    def kind_check():
+        pass
 
+    @staticmethod
+    def get    
 
+    # @staticmethod
+    def _normalize_duraton(self, value=duration_min) -> float:
+        if not isinstance(value, float):
+            if type(value) == int:
+                self.duration_min = float(value)
+            else:
+                raise TypeError(f"duration must be float, got {type(value)}")
+        if self.duration_min <= 0:
+            raise ValueError(f"duration must be positive, got {type(value)}")  
+        self.duration_min = round(float(value), 2)
+        return self.duration_min
 
 
     
+    @staticmethod
+    def _validate_strenght():
+        pass
 
 
-    
-        
-                            
-
-
-
-    
-    
-
-
-
+   
 @dataclass(slots=True)
 class Workout:
     duration: float
@@ -73,6 +86,8 @@ class Workout:
             raise TypeError(f"duration must be int|float, got {type(value)}")
         if value <= 0:
             raise ValueError(f"duration must be positive, got {value}")
+        else:
+            pass    
         return round(float(value), 2)
 
     @classmethod
@@ -131,10 +146,3 @@ class Workout:
         self.validate_title(self.title)
         self.validate_date(self.date)
         # self.id +=1 Запасной счетчик
-
-# @dataclass  
-# class InMemoryWorkouts:
-
-
-
-
