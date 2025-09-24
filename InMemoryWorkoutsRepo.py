@@ -21,12 +21,12 @@ class User:
     age: Optional[int] = None
     weight_kg: Optional[float] = None
     height_cm: Optional[float] = None
-    sex: Optional[Literal["male", "female"]] = None
+    sex: Optional[str] = None
 
     # class counter (optional, for debug/demo)
     count: ClassVar[int] = 0
 
-    def _post_init_(self):
+    def __post_init__(self):
         # validate fields in order
         self._validate_tg_id()
         self._validate_optional_numbers()
@@ -37,7 +37,7 @@ class User:
     def _validate_tg_id(self) -> None:
         # 1) type
         if not isinstance(self.tg_id, str):
-            raise TypeError(f"tg_id must be a str, got {type(self.tg_id)._name_}")
+            raise TypeError(f"tg_id must be a str, got {type(self.tg_id).__name__}")
         # 2) normalize
         self.tg_id = self.tg_id.strip()
         # 3) required non-empty
@@ -68,10 +68,58 @@ class User:
             raise TypeError("sex must be a string or None")
         self.sex = self.sex.strip().lower()
         if self.sex not in {"male", "female"}:
-            raise ValueError("sex must be 'male' or 'female' if provided")
-        
-Mario = User(tg_id='mario', age=35, weight_kg=103.5, height_cm=178, sex='male')
-print(Mario.created_at)
-Luigi = User(tg_id='', age=35, weight_kg=103.5, height_cm=178, sex='mal')
-print(Luigi)
-print(User.count)
+            raise ValueError("sex must be 'male' or 'female' if provided")
+
+Mario = User(tg_id="Mario", age=35, weight_kg=135.5, height_cm=178, sex='male')
+print(Mario)
+
+@dataclass(slots=True)
+class Exercise:
+    kind: str # strength, cardio, other
+    title: str
+    duration_min: float #must be > 0
+    # must be for strength
+    weight_kg: Optional[float] = None
+    reps: Optional[int] = None
+    sets: Optional[int] = None
+    # class counter (optional, for debug/demo)
+    count: ClassVar[int] = 0
+
+    def __post_init__(self):
+        self._validate_kind()
+        self._validate_title()
+        Exercise.count += 1
+
+    def _validate_kind(self):
+        if not isinstance(self.kind, str) or self.kind is None:
+            raise TypeError(f"kind must be a str, got {type(self.kind).__name__}")
+        self.kind = self.kind.strip().lower()
+        if self.kind not in {"strength", "cardio", "other"}:
+            raise ValueError(f"kind must be 'strength', 'cardio', or 'other'")
+        else:
+            if self.kind == "strength":
+                if self.weight_kg is None:
+                    raise ValueError("weight_kg must be provided")
+                if not isinstance(self.weight_kg, float):
+                    if isinstance(self.weight_kg, int):
+                        self.weight_kg = float(self.weight_kg)
+                    else:
+                        raise TypeError("weight_kg must be a number")
+                if self.weight_kg <= 0:
+                    raise ValueError("weight_kg must be > 0")
+
+    def _validate_title(self) -> None:
+        if not isinstance(self.title, str):
+            raise TypeError(f"title must be a str, got {type(self.title).__name__}")
+        self.title = self.title.strip()
+        if self.title == "":
+            raise ValueError("title must be a non-empty string")
+
+
+
+
+
+
+
+
+
