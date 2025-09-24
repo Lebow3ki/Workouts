@@ -1,148 +1,77 @@
 from dataclasses import dataclass, field
-from typing import ClassVar, Iterable, Optional
-from datetime import datetime, date as Date
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
+from typing import ClassVar, Optional, Literal
 
-MOSCOW_TZ = ZoneInfo("Europe/Moscow")
-
-def _moscow_dtnow_formatted():
-    return datetime.now(MOSCOW_TZ).strftime("%d.%m.%Y, %H:%M")
 
 @dataclass(slots=True)
 class User:
+    """
+    Represents a user.
+
+    Fields:
+      - tg_id: Telegram ID (non-empty string).
+      - created_at: timezone-aware datetime in UTC, set automatically.
+      - age: years (optional, >= 0).
+      - weight_kg: weight in kilograms (optional, > 0).
+      - height_cm: height in centimeters (optional, > 0).
+      - sex: optional, one of "male"|"female".
+    """
     tg_id: str
-    created_at: str = field (default_factory=_moscow_dtnow_formatted()) 
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     age: Optional[int] = None
-    weight: Optional[float] = None
-    height: Optional[float] = None
-    sex: Optional[int] = None
+    weight_kg: Optional[float] = None
+    height_cm: Optional[float] = None
+    sex: Optional[Literal["male", "female"]] = None
 
-    def __post_init__(self):
-        self._check_tg_id()
+    # class counter (optional, for debug/demo)
+    count: ClassVar[int] = 0
 
-    @staticmethod
-    def _check_tg_id(value: str):
-        if self.tg_id.strip() is None:
-            raise ValueError(f'Missing Telegram ID')
-        if self.tg_id is not isinstance(value, str):
-            raise TypeError(f"Telegram ID must be a string, now got {type(value)}")
-        # Later to add check on unique tg_id    
+    def _post_init_(self):
+        # validate fields in order
+        self._validate_tg_id()
+        self._validate_optional_numbers()
+        self._validate_sex()
+        # increase class counter
+        User.count += 1
 
-@dataclass(slots=True)
-class Exercise:
-    ALLOWED_KINDS: ClassVar[tuple[str, ...]] = ('cardio', 'strength', 'other')
-    kind: str # Тип упражнения
-    title: str # Человекочитаемое название
-    weight_kg: float 
-    duration_min: float
-    pace: float
-    reps: int
-    sets: int
-    date: str
-    duration_min: float
-    notes: Optional[str]
+    def _validate_tg_id(self) -> None:
+        # 1) type
+        if not isinstance(self.tg_id, str):
+            raise TypeError(f"tg_id must be a str, got {type(self.tg_id)._name_}")
+        # 2) normalize
+        self.tg_id = self.tg_id.strip()
+        # 3) required non-empty
+        if self.tg_id == "":
+            raise ValueError("tg_id must be a non-empty string")
 
-    def __post_init__(self):
-        pass    
-    
-    @staticmethod
-    def kind_check():
-        pass
+    def _validate_optional_numbers(self) -> None:
+        if self.age is not None:
+            if not isinstance(self.age, int):
+                raise TypeError("age must be int or None")
+            if self.age < 0:
+                raise ValueError("age must be >= 0")
+        if self.weight_kg is not None:
+            if not isinstance(self.weight_kg, (int, float)):
+                raise TypeError("weight_kg must be a number or None")
+            if self.weight_kg <= 0:
+                raise ValueError("weight_kg must be > 0")
+        if self.height_cm is not None:
+            if not isinstance(self.height_cm, (int, float)):
+                raise TypeError("height_cm must be a number or None")
+            if self.height_cm <= 0:
+                raise ValueError("height_cm must be > 0")
 
-    @staticmethod
-    def get    
-
-    # @staticmethod
-    def _normalize_duraton(self, value=duration_min) -> float:
-        if not isinstance(value, float):
-            if type(value) == int:
-                self.duration_min = float(value)
-            else:
-                raise TypeError(f"duration must be float, got {type(value)}")
-        if self.duration_min <= 0:
-            raise ValueError(f"duration must be positive, got {type(value)}")  
-        self.duration_min = round(float(value), 2)
-        return self.duration_min
-
-
-    
-    @staticmethod
-    def _validate_strenght():
-        pass
-
-
-   
-@dataclass(slots=True)
-class Workout:
-    duration: float
-    date: Date
-    title: str
-
-    ALLOWED_TITLES: ClassVar[tuple[str, ...]] = ('cardio', 'strength', 'elliptical', 'treadmill')
-
-    @staticmethod
-    def _normalize_duraton(value: float | int) -> float:
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"duration must be int|float, got {type(value)}")
-        if value <= 0:
-            raise ValueError(f"duration must be positive, got {value}")
-        else:
-            pass    
-        return round(float(value), 2)
-
-    @classmethod
-
-
-        # if self.duration is None:
-        #     raise ValueError(f'Длительность тренировки - обязательное значение')
-        # if not isinstance(self.duration, (int,float)):
-        #     raise TypeError(f"Длительность должна быть числом, получен {type(self.duration)}")
-        # if type(self.duration) == float:
-        #     self.duration = round(self.duration, 2)
-        # if self.duration <= 0:
-        #     raise ValueError(f'Длительность не может быть <= 0')
-    
-    def validate_title (self, title:str) -> str:
-        # Тут мы проверяем тип тренировки из ClassVar, добавляем проверки ввода, обрабатываем ввод
-        if self.title is None:
-            raise ValueError(f"Введите тип тренировки")        
-        elif not isinstance(self.title, str):
-            raise TypeError(f'Тренировка должна быть текстом, сейчас получен {type(self.title)}')    
-        # Обрабатываем ввод:
-        self.title = self.title.lower().strip()
-        # Проверяем допуск ClassVar
-        if self.title not in self.SESSION:
-            raise ValueError(f"Неверный тип тренировки: {self.title}. Допустимые: {self.SESSION}")
-
-    def validate_date(self, date: str = "%d.%m.%Y") -> str:
-    # Временное рещение, надо добавить автоматическую генерацию значения. 
-    # Проверяем дату и возвращает в заданном формате
-        if self.date is None:
-            self.date = date.today().strftime("%d.%m.%Y")
-        if isinstance(self.date, str):
-            try:
-                for format in ["%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"]:
-                    try:
-                        self.date = datetime.datetime.strptime(self.date, format).date()
-                        break   
-                    except ValueError:
-                        continue
-                else:
-                    ValueError(f'Не удалось распознать тип даты{self.date}')
-            except Exception as e:
-                raise ValueError(f'Ошибка преобразования строки в дату: {e}')                    
-                               
-        elif not isinstance(self.date, int):
-            raise TypeError(f'Дата должна быть текстом, сейчас получен {type(self.date)}')
-        # Проверяем, что дата не в будущем:
-        if self.date > date.today():
-           raise ValueError(f"Дата не может быть в будущем: {self.date}") 
-       
-    def __init__(self):
-        pass
-
-    def __post_init__(self):
-        self.validate_duraton(self.duration)
-        self.validate_title(self.title)
-        self.validate_date(self.date)
-        # self.id +=1 Запасной счетчик
+    def _validate_sex(self) -> None:
+        if self.sex is None:
+            return
+        if not isinstance(self.sex, str):
+            raise TypeError("sex must be a string or None")
+        self.sex = self.sex.strip().lower()
+        if self.sex not in {"male", "female"}:
+            raise ValueError("sex must be 'male' or 'female' if provided")
+        
+Mario = User(tg_id='mario', age=35, weight_kg=103.5, height_cm=178, sex='male')
+print(Mario.created_at)
+Luigi = User(tg_id='', age=35, weight_kg=103.5, height_cm=178, sex='mal')
+print(Luigi)
+print(User.count)
