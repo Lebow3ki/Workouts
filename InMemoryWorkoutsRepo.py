@@ -44,11 +44,12 @@ class User:
         if self.tg_id == "":
             raise ValueError("tg_id must be a non-empty string")
 
+
     def _validate_optional_numbers(self) -> None:
         if self.age is not None:
             if not isinstance(self.age, int):
                 raise TypeError("age must be int or None")
-            if self.age < 0:
+            if self.age <= 0:
                 raise ValueError("age must be >= 0")
         if self.weight_kg is not None:
             if not isinstance(self.weight_kg, (int, float)):
@@ -75,7 +76,7 @@ print(Mario)
 
 @dataclass(slots=True)
 class Exercise:
-    kind: str # strength, cardio, other
+    kind: str # strength, cardio
     title: str
     duration_min: float #must be > 0
     # must be for strength
@@ -88,33 +89,65 @@ class Exercise:
     def __post_init__(self):
         self._validate_kind()
         self._validate_title()
+        self._validate_duration_min()
         Exercise.count += 1
 
     def _validate_kind(self):
-        if not isinstance(self.kind, str) or self.kind is None:
+        if not isinstance(self.kind, str):
             raise TypeError(f"kind must be a str, got {type(self.kind).__name__}")
         self.kind = self.kind.strip().lower()
         if self.kind not in {"strength", "cardio", "other"}:
             raise ValueError(f"kind must be 'strength', 'cardio', or 'other'")
         else:
             if self.kind == "strength":
-                if self.weight_kg is None:
-                    raise ValueError("weight_kg must be provided")
+                # Check weight_kg
                 if not isinstance(self.weight_kg, float):
                     if isinstance(self.weight_kg, int):
                         self.weight_kg = float(self.weight_kg)
                     else:
-                        raise TypeError("weight_kg must be a number")
+                        raise TypeError("weight_kg must be provided and must be a number")
                 if self.weight_kg <= 0:
                     raise ValueError("weight_kg must be > 0")
+                # Check reps
+                if not isinstance(self.reps, int):
+                        raise TypeError("reps must be provided and must be a number")
+                if self.reps <= 0:
+                    raise ValueError("reps must be > 0")
+                # Check sets
+                if not isinstance(self.sets, int):
+                        raise TypeError("sets must be provided and must be a number")
+                if self.sets <= 0:
+                    raise ValueError("sets must be > 0") 
+            elif self.kind == "cardio":
+                if not self.weight_kg or self.reps or self.sets is None:
+                    raise TypeError(f'Cardio cannot include weight and/or reps and/or sets, use strength')    
 
     def _validate_title(self) -> None:
         if not isinstance(self.title, str):
             raise TypeError(f"title must be a str, got {type(self.title).__name__}")
-        self.title = self.title.strip()
+        self.title = self.title.strip().lower()
         if self.title == "":
             raise ValueError("title must be a non-empty string")
 
+    def _validate_duration_min(self):
+        if not isinstance(self.duration_min, float):
+            if isinstance(self.duration_min, int):
+                self.duration_min = float(self.duration_min)
+            else:
+                raise TypeError("duration must be provided and must be a number")
+            if self.duration_min <= 0:
+                raise ValueError("duration must be > 0")
+    
+    def to_dict(self):
+        result = {}
+        if self.kind == "strength":
+            result = {'kind': self.kind, 'title': self.title, 'duraion_min': self.duration_min, 'weight_kg': self.weight_kg, 'reps': self.reps, 'sets': self.sets}
+        else:
+            result = {'kind': self.kind, 'title': self.title, 'duraion_min': self.duration_min}                    
+        return result                   
+
+workout = Exercise('strength', 'pull-ups', 40, 50, 10, 4)
+print(workout.sets)
 
 
 
