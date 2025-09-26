@@ -26,7 +26,7 @@ class User:
     # class counter (optional, for debug/demo)
     count: ClassVar[int] = 0
 
-    def __post_init__(self):
+    def _post_init_(self):
         # validate fields in order
         self._validate_tg_id()
         self._validate_optional_numbers()
@@ -37,7 +37,7 @@ class User:
     def _validate_tg_id(self) -> None:
         # 1) type
         if not isinstance(self.tg_id, str):
-            raise TypeError(f"tg_id must be a str, got {type(self.tg_id).__name__}")
+            raise TypeError(f"tg_id must be a str, got {type(self.tg_id)._name_}")
         # 2) normalize
         self.tg_id = self.tg_id.strip()
         # 3) required non-empty
@@ -86,7 +86,7 @@ class Exercise:
     # class counter (optional, for debug/demo)
     count: ClassVar[int] = 0
 
-    def __post_init__(self):
+    def _post_init_(self):
         self._validate_kind()
         self._validate_title()
         self._validate_duration_min()
@@ -94,10 +94,10 @@ class Exercise:
 
     def _validate_kind(self):
         if not isinstance(self.kind, str):
-            raise TypeError(f"kind must be a str, got {type(self.kind).__name__}")
+            raise TypeError(f"kind must be a str, got {type(self.kind)._name_}")
         self.kind = self.kind.strip().lower()
-        if self.kind not in {"strength", "cardio", "other"}:
-            raise ValueError(f"kind must be 'strength', 'cardio', or 'other'")
+        if self.kind not in {"strength", "cardio"}:
+            raise ValueError(f"kind must be 'strength', 'cardio'")
         else:
             if self.kind == "strength":
                 # Check weight_kg
@@ -119,12 +119,16 @@ class Exercise:
                 if self.sets <= 0:
                     raise ValueError("sets must be > 0") 
             elif self.kind == "cardio":
-                if not self.weight_kg or self.reps or self.sets is None:
-                    raise TypeError(f'Cardio cannot include weight and/or reps and/or sets, use strength')    
+                if self.weight_kg:
+                    raise TypeError(f'Cardio cannot include weight_kg')
+                if self.reps:
+                    raise TypeError(f'Cardio cannot include reps')
+                if self.sets:
+                    raise TypeError(f'Cardio cannot include sets')
 
     def _validate_title(self) -> None:
         if not isinstance(self.title, str):
-            raise TypeError(f"title must be a str, got {type(self.title).__name__}")
+            raise TypeError(f"title must be a str, got {type(self.title)._name_}")
         self.title = self.title.strip().lower()
         if self.title == "":
             raise ValueError("title must be a non-empty string")
@@ -139,7 +143,6 @@ class Exercise:
                 raise ValueError("duration must be > 0")
     
     def to_dict(self):
-        result = {}
         if self.kind == "strength":
             result = {'kind': self.kind, 'title': self.title, 'duraion_min': self.duration_min, 'weight_kg': self.weight_kg, 'reps': self.reps, 'sets': self.sets}
         else:
@@ -149,10 +152,75 @@ class Exercise:
 workout = Exercise('strength', 'pull-ups', 40, 50, 10, 4)
 print(workout.sets)
 
+class WorkoutSession:
+    id: str
+    user_id: str
+    title: str
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    duration_min: Optional[float]
+    exercises: []
 
+    def _post_init_(self):
+        pass
 
+    def start_timer(self):
+        if isinstance(self.start_time, datetime):
+            return self.start_time
+        else:
+            self.start_time = datetime.now(timezone.utc)
+            return self.start_time
 
+    def stop_timer(self):
+        if not isinstance(self.start_time, datetime):
+            raise ValueError("cannot stop once workout is not started")
+        if not self.exercises:
+            raise ValueError("cannot stop once workout exercises not set")
+        self.end_time = datetime.now(timezone.utc)
 
+        return self.end_time,
 
+    def add_exercise(self, exercise: Exercise):
+        if self.start_time:
+            if self.end_time is None:
+                self.exercises.append(exercise)
+            else:
+                raise ValueError("cannot add exercises if workout is already over")
+        else:
+            raise ValueError("cannot add exercises if workout has not started")
 
+    def is_open(self):
+        if self.start_time:
+            if self.end_time is None:
+                return True
+            else:
+                return False
+        else:
+            raise ValueError("Session has not started")
 
+    def duration_minutes(self):
+        try:
+            if self.is_open():
+                now = datetime.now(timezone.utc)
+                result = (now - self.start_time).total_seconds() / 60
+                return round(result, 2)
+            else:
+                self.duration_min = float((self.end_time.minute - self.start_time.minute) / 60)
+        except ValueError:
+            return float(0)
+
+    def to_dict(self):
+        if self.is_open():
+            raise ValueError("Session has not ended")
+        else:
+            result= { 
+                'id': self.id,
+                'user_id': self.user_id,
+                'title': self.title,
+                'start_time': self.start_time,
+                'end_time': self.end_time,
+                'duration_min': self.duration_min,
+                'exercises': {[]}
+            }
+        return result
+        
