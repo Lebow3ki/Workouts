@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import ClassVar, Optional, List, Dict, Any
 import json
+from pathlib import Path
 
 
 # ──────────────────────────────
@@ -22,9 +23,9 @@ def _iso_utc(dt: Optional[datetime]) -> Optional[str]:
 # ВСПОМОГАТЕЛЬНОЕ: Export to JSON
 # ──────────────────────────────
 
-def _to_json(obj, filename: str = 'wrksdata'):
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(obj, f, indent=2, ensure_ascii=False)
+# def _to_json(obj, filename: str = 'wrksdata'):
+#     with open(filename, 'w', encoding='utf-8') as f:
+#         json.dump(obj, f, indent=2, ensure_ascii=False)
 
 # ──────────────────────────────
 # USER
@@ -242,11 +243,17 @@ class WorkoutSession:
             "exercises_count": len(self.exercises),
             "exercises": exercises_dicts,
         }
-    
-    def to_dict_with_metadata(self) -> Dict[str, Any]:
-        """Добавляет метаданные к экспорту"""
-        data = []
-        data['version'] = '1.0'
-        data['exported_at'] = datetime.now(timezone.utc).isoformat()
-        data = self._to_dict(self)
-        return data
+       
+    def export_sessions_to_json(sessions: List[WorkoutSession], path: str | Path = 'exports/wrkts.json', *, pretty: bool = True) -> Path:
+    # Сохранить список сессий в единый JSON-файл c шапкой метаданных.
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        payload = {
+            "version": "1.0",
+            "exported_at": _iso_utc(datetime.now(timezone.utc)),
+            "sessions": [s.to_dict() for s in sessions],
+        }
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2 if pretty else None)
+        return path
